@@ -3,6 +3,7 @@ import time
 from random import *
 import math
 pygame.init()
+clock = pygame.time.Clock()
 
 #______________________________________________________________________________
 #                                  CLASSES
@@ -40,6 +41,7 @@ class GameConfig :
 	imgCadre = pygame.image.load('images/cadre.png')
 	cadreW = 1000
 	cadreH = 690
+	timer = 0
 
 class GameState :
 	def __init__(self) :
@@ -53,6 +55,7 @@ class GameState :
 		self.crossY=GameConfig.windowH/2 - GameConfig.crossH/2
 		self.cadreX=GameConfig.windowW - GameConfig.windowW/1.25 -50
 		self.cadreY=GameConfig.windowH - GameConfig.windowH/1.086 - 50
+
 	def draw(self,window):
 		window.blit(GameConfig.imgHero,(self.HeroX,self.HeroY))
 		#window.blit(GameConfig.imgBalle,(Balle.balleX,Balle.balleY))
@@ -87,8 +90,8 @@ class Balle :
 		self.balleX=GameConfig.windowW/20+GameConfig.HeroW
 		self.balleY=gameState.HeroY+GameConfig.HeroH/2 +8
 		self.balleSpeed=3
-		self.test=None
-		self.angle = math.atan(abs(gameState.crossY-gameState.HeroY) / abs(gameState.crossX - gameState.HeroX)) * (180 / math.pi)
+		#self.angle = math.atan2(gameState.crossY+GameConfig.crossH/2-gameState.HeroY+GameConfig.HeroH/2+8,gameState.crossX+GameConfig.crossW/2 - gameState.HeroX+GameConfig.HeroW)
+		self.angle = math.atan2(gameState.crossY-gameState.HeroY,gameState.crossX- gameState.HeroX)
 
 	def update(self) :
 		self.balleX += self.balleSpeed*math.cos(self.angle)
@@ -180,10 +183,10 @@ def printballe(window, gameState) :
 	compteur=0
 	while compteur<array_size_balles() :
 		if GameConfig.balles[compteur] is not None :
-			#GameConfig.balles[compteur].update()
-			GameConfig.balles[compteur].balleX+=GameConfig.balles[compteur].balleSpeed
-			GameConfig.balles[compteur].balleY+=GameConfig.balles[compteur].balleSpeed*math.tan(GameConfig.balles[compteur].angle)
-			window.blit(test,(GameConfig.balles[compteur].balleX,GameConfig.balles[compteur].balleY))
+			GameConfig.balles[compteur].update()
+			#GameConfig.balles[compteur].balleX+=GameConfig.balles[compteur].balleSpeed
+			#GameConfig.balles[compteur].balleY+=GameConfig.balles[compteur].balleSpeed*math.tan(GameConfig.balles[compteur].angle)
+			window.blit(GameConfig.imgBalle,(GameConfig.balles[compteur].balleX,GameConfig.balles[compteur].balleY))
 			#print(GameConfig.balles[compteur].angle)
 		compteur+=1
 
@@ -295,6 +298,7 @@ def settings_game(window, horloge) :
 def gameLoop(window, horloge) :
 	gameState=GameState()
 	nextMove=0
+	timer=0
 	
 	start(window,gameState)
 	displayMessage(window,"3",100,GameConfig.windowW/2,GameConfig.windowH/2)
@@ -316,6 +320,10 @@ def gameLoop(window, horloge) :
 	pygame.display.update()
 	time.sleep(0.4)
 	
+	spawnEnnemy(gameState);
+	spawnEnnemy(gameState);
+	spawnEnnemy(gameState);
+	printennemy(window);
 	while GameConfig.game_over==False and GameConfig.game_win==False :
 		pygame.mouse.set_visible(False)
 		for event in pygame.event.get() :
@@ -336,17 +344,14 @@ def gameLoop(window, horloge) :
 				#Balle.balleY=event.pos[1]
 				#print(angle(gameState))
 
-			if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3  :
-				spawnEnnemy(gameState)
-
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_DELETE:
 				GameConfig.game_over = True
 			if GameConfig.ballestirées==20:
 				GameConfig.game_win = True
 				
-			if event.type == pygame.KEYDOWN and event.key == pygame.K_UP and gameState.HeroY>2 :
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_UP :
 				nextMove=Move.Up
-			if event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN and gameState.HeroY<GameConfig.windowH-2 :
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN and gameState.HeroY<666 :
 				nextMove=Move.Down
 			if event.type == pygame.KEYUP :
 				nextMove=0
@@ -354,13 +359,18 @@ def gameLoop(window, horloge) :
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE :
 				pygame.quit()
 				quit()
-				
+		
+		if timer%500==0  :
+			spawnEnnemy(gameState)		
 		supprimerballe()
 		ennemydead()
+		print(gameState.HeroY)
 		#Balle.balleX += Balle.balleSpeed    
 		gameState.advanceState(nextMove)
 		#nextMove=getIA(gameState)
 		horloge.tick(100)
+		timer+=1
+		print(timer)
 		gameState.drawbackground(window,GameConfig.blue)
 		gameState.draw(window)
 		printballe(window, gameState)
