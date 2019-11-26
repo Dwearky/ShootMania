@@ -1,6 +1,7 @@
 import pygame
 import time
 from random import *
+import math
 pygame.init()
 
 #______________________________________________________________________________
@@ -24,13 +25,21 @@ class GameConfig :
 	game_over = False
 	game_win = False
 	balles=[None]
-	imgBalle = pygame.image.load('images/balle.png')
+	#imgBalle = pygame.image.load('images/balle.png')
 	balleW=24
 	balleH=12
-	ballesTirees=0
+	imgBalle = pygame.image.load('images/balle.png')
+	ballestirées=0
 	temps=0
-	ennemisTues=0
+	ennemistués=0
 	score=0
+	ennemies=[None]
+	imgEnnemy = pygame.image.load('images/ennemy.png')
+	EnnemiW = 60
+	EnnemiH = 37
+	imgCadre = pygame.image.load('images/cadre.png')
+	cadreW = 1000
+	cadreH = 690
 
 class GameState :
 	def __init__(self) :
@@ -42,10 +51,14 @@ class GameState :
 		self.score=0
 		self.crossX=GameConfig.windowW/5
 		self.crossY=GameConfig.windowH/2 - GameConfig.crossH/2
+		self.cadreX=GameConfig.windowW - GameConfig.windowW/1.25 -50
+		self.cadreY=GameConfig.windowH - GameConfig.windowH/1.086 - 50
 	def draw(self,window):
 		window.blit(GameConfig.imgHero,(self.HeroX,self.HeroY))
 		#window.blit(GameConfig.imgBalle,(Balle.balleX,Balle.balleY))
 		window.blit(GameConfig.imgCrosshair,(self.crossX,self.crossY))
+		window.blit(GameConfig.imgCadre,(self.cadreX,self.cadreY))
+
 
 	def advanceState(self,nextM) :
 		self.HeroY+=nextM
@@ -74,6 +87,19 @@ class Balle :
 		self.balleX=GameConfig.windowW/20+GameConfig.HeroW
 		self.balleY=gameState.HeroY+GameConfig.HeroH/2 +8
 		self.balleSpeed=3
+		self.test=None
+		self.angle = math.atan(abs(gameState.crossY-gameState.HeroY) / abs(gameState.crossX - gameState.HeroX)) * (180 / math.pi)
+
+	def update(self) :
+		self.balleX += self.balleSpeed*math.cos(self.angle)
+		self.balleY += self.balleSpeed*math.sin(self.angle)
+		return self.balleX, self.balleY
+
+class Ennemy :
+	def __init__(self, gameState) :
+		self.ennemyX=randint(200,1000)
+		self.ennemyY=randint(50,650)
+
 #______________________________________________________________________________
 #                                  FONCTIONS
 #______________________________________________________________________________
@@ -110,42 +136,79 @@ def difficulte(window) :
 		else :
 			displayMessage(window,"Difficulté : < Normal >",40,GameConfig.windowW/2,GameConfig.windowH/2)
 
-def array_size() :
+def array_size_balles() :
 	compteur=0
 	for valeur in GameConfig.balles :
+		compteur+=1
+	return compteur
+
+def array_size_ennemies() :
+	compteur=0
+	for valeur in GameConfig.ennemies :
 		compteur+=1
 	return compteur
 
 def tirer(gameState) :
 	compteur=0
 	continuer=False
-	
 	while continuer==False :
 		if GameConfig.balles[compteur] is None :
 			GameConfig.balles[compteur]=Balle(gameState)
-			GameConfig.ballesTirees+=1
-			if array_size()-1 == compteur :
+			GameConfig.ballestirées+=1
+			if array_size_balles()-1 == compteur :
 				GameConfig.balles.append(None)
 			continuer=True
 		else :
 			compteur+=1
-	#print(GameConfig.balles)        
-
-def printballe(window) :
-	compteur=0
-	while compteur<array_size() :
-		if GameConfig.balles[compteur] is not None :
-			GameConfig.balles[compteur].balleX+=GameConfig.balles[compteur].balleSpeed
-			window.blit(GameConfig.imgBalle,(GameConfig.balles[compteur].balleX,GameConfig.balles[compteur].balleY))
-		compteur+=1
 		
+		#print(GameConfig.balles)        
+
+def spawnEnnemy(gameState) :
+	compteur=0
+	continuer=False
+	
+	while continuer==False :
+		if GameConfig.ennemies[compteur] is None :
+			GameConfig.ennemies[compteur]=Ennemy(gameState)
+			if array_size_ennemies()-1 == compteur :
+				GameConfig.ennemies.append(None)
+			continuer=True
+		else :
+			compteur+=1    
+
+def printballe(window, gameState) :
+	compteur=0
+	while compteur<array_size_balles() :
+		if GameConfig.balles[compteur] is not None :
+			#GameConfig.balles[compteur].update()
+			GameConfig.balles[compteur].balleX+=GameConfig.balles[compteur].balleSpeed
+			GameConfig.balles[compteur].balleY+=GameConfig.balles[compteur].balleSpeed*math.tan(GameConfig.balles[compteur].angle)
+			window.blit(test,(GameConfig.balles[compteur].balleX,GameConfig.balles[compteur].balleY))
+			#print(GameConfig.balles[compteur].angle)
+		compteur+=1
+
+def printennemy(window) :
+	compteur=0
+	while compteur<array_size_ennemies() :
+		if GameConfig.ennemies[compteur] is not None :
+			#GameConfig.ennemies[compteur].ennemyX+=GameConfig.ennemies[compteur].balleSpeed
+			window.blit(GameConfig.imgEnnemy,(GameConfig.ennemies[compteur].ennemyX,GameConfig.ennemies[compteur].ennemyY))
+		compteur+=1
+
 def supprimerballe() :
 	compteur=0
-	while compteur<array_size() :
+	while compteur<array_size_balles() :
 		if GameConfig.balles[compteur] is not None :
-			if GameConfig.balles[compteur].balleX>GameConfig.windowW :
-			#or GameConfig.balles[compteur].balleY>GameConfig.windowH or GameConfig.balles[compteur].balleY < GameConfig.windowH or GameConfig.balles[compteur].balleX<GameConfig.windowW : 
+			if GameConfig.balles[compteur].balleX>GameConfig.windowW : 
 				GameConfig.balles[compteur]=None
+		compteur+=1
+
+def ennemydead() :
+	compteur=0
+	while compteur<array_size_ennemies() :
+		if GameConfig.ennemies[compteur] is not None :
+			if GameConfig.ennemies[compteur].ennemyX>GameConfig.windowW : 
+				GameConfig.ennemies[compteur]=None
 		compteur+=1
 
 def displayMessage(window,text,fontSize,x,y) :
@@ -175,7 +238,16 @@ def start(window, gameState) :
 	gameState.draw(window)
 	displayMessage(window,"Niveau : "+str(GameConfig.level)+"  /  Difficulté : "+str(GameConfig.difficulty),16,80,10)
 
-
+'''def angle(gameState) : 
+	#return (gameState.crossY-gameState.HeroY) / (gameState.crossX - gameState.HeroX)
+	tan = (abs(gameState.crossY-gameState.HeroY) / abs(gameState.crossX - gameState.HeroX))
+	angle = math.atan(tan) * (180 / math.pi)
+	return angle
+'''	
+def inZone(gameState) :
+	if gameState.crossX > GameConfig.windowW - GameConfig.windowW/1.25 -50 and gameState.crossX<GameConfig.windowW - GameConfig.windowW/1.25 -50+GameConfig.cadreW and gameState.crossY>GameConfig.windowH - GameConfig.windowH/1.086 - 50 and gameState.crossY< GameConfig.windowH - GameConfig.windowH/1.086 - 50 + GameConfig.cadreH : 
+		return True
+	return False
 #______________________________________________________________________________
 #                                  FENETRES
 #______________________________________________________________________________
@@ -206,12 +278,12 @@ def settings_game(window, horloge) :
 				if GameConfig.difficulty<3 and event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT :
 					GameConfig.difficulty +=1
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_UP :
-				GameConfig.position=1
+						GameConfig.position=1
+			
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE :
-				continuer = False
 				pygame.quit()
 				quit()
-
+				
 		horloge.tick(100)
 		gameState.drawbackground(window,GameConfig.blue)
 		#displayMessage(window,"Choisir niveau : ",40,GameConfig.windowW/2,GameConfig.windowH/2-50)
@@ -245,54 +317,54 @@ def gameLoop(window, horloge) :
 	time.sleep(0.4)
 	
 	while GameConfig.game_over==False and GameConfig.game_win==False :
-
 		pygame.mouse.set_visible(False)
 		for event in pygame.event.get() :
 			if event.type == pygame.QUIT :
 				GameConfig.game_over = True
-				
+
 			if event.type == pygame.MOUSEMOTION : 
-				if event.pos[0] > GameConfig.windowH/5+15 and event.pos[0] < GameConfig.windowW-20 and event.pos[1] < GameConfig.windowW-20 and event.pos[1] > 10  :
+				#if event.pos[1] > GameConfig.windowW - GameConfig.windowW/1.25 -50 and event.pos[1]<GameConfig.windowW - GameConfig.windowW/1.25 -50+GameConfig.cadreW and event.pos[0]>GameConfig.windowH - GameConfig.windowH/1.086 - 50 and event.pos[0]< GameConfig.windowH - GameConfig.windowH/1.086 - 50 + GameConfig.cadreH :
+				if event.pos[0] > gameState.HeroX + GameConfig.HeroW :
+					#SDL_WM_GrabInput(SDL_GRAB_ON)
+    				#SDL_ShowCursor(SDL_DISABLE)
 					gameState.crossX = event.pos[0]
 					gameState.crossY = event.pos[1]
 				#print(event.pos[1]) #permet d'afficher coord du curseur
 			if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1  :
 				tirer(gameState)
-				Balle.balleX=event.pos[0]
-				Balle.balleY=event.pos[1]
+				#Balle.balleX=event.pos[0]
+				#Balle.balleY=event.pos[1]
+				#print(angle(gameState))
 
-				
+			if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3  :
+				spawnEnnemy(gameState)
+
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_DELETE:
 				GameConfig.game_over = True
-			if GameConfig.ballesTirees == 20:
+			if GameConfig.ballestirées==20:
 				GameConfig.game_win = True
 				
-			if event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_UP and gameState.HeroY>2 :
 				nextMove=Move.Up
-			if event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN and gameState.HeroY<GameConfig.windowH-2 :
 				nextMove=Move.Down
 			if event.type == pygame.KEYUP :
 				nextMove=0
 				
-			
-
-
-
-			if event.type == pygame.QUIT :
-				continuer = False
-		
-
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE :
+				pygame.quit()
+				quit()
+				
 		supprimerballe()
+		ennemydead()
 		#Balle.balleX += Balle.balleSpeed    
 		gameState.advanceState(nextMove)
 		#nextMove=getIA(gameState)
-		
 		horloge.tick(100)
 		gameState.drawbackground(window,GameConfig.blue)
 		gameState.draw(window)
-		printballe(window)
-		#pygame.display.flip()
-
+		printballe(window, gameState)
+		printennemy(window)
 		displayMessage(window,"Niveau : "+str(GameConfig.level)+"  /  Difficulté : "+str(GameConfig.difficulty),16,80,10)
 		#displayMessage(window,"Score : "+str(gameState.score),16,30,10)
 
@@ -319,11 +391,11 @@ def end_game(window,horloge) :
 			displayMessage(window,"Dommage vous avez perdu ! Appuyez sur une touche pour recommencer",40,GameConfig.windowW/2,50)
 		displayMessage(window,"Statistiques :",30,GameConfig.windowW/2,GameConfig.windowH/2-200)
 		displayMessage(window,"Temps : "+str(GameConfig.temps),22,GameConfig.windowW/2,GameConfig.windowH/2-140)
-		displayMessage(window,"Balles tirées : "+str(GameConfig.ballesTirees),22,GameConfig.windowW/2,GameConfig.windowH/2-100)
-		displayMessage(window,"Ennemis tués : "+str(GameConfig.ennemisTues),22,GameConfig.windowW/2,GameConfig.windowH/2-60)
+		displayMessage(window,"Balles tirées : "+str(GameConfig.ballestirées),22,GameConfig.windowW/2,GameConfig.windowH/2-100)
+		displayMessage(window,"Ennemis tués : "+str(GameConfig.ennemistués),22,GameConfig.windowW/2,GameConfig.windowH/2-60)
 		displayMessage(window,"Score : "+str(GameConfig.score),22,GameConfig.windowW/2,GameConfig.windowH/2-20)
 		pygame.display.update()
-		time.sleep(5)
+		time.sleep(3)
 		for event in pygame.event.get() :
 			if event.type == pygame.QUIT :
 				continuer = True
