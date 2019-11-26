@@ -3,7 +3,6 @@ import time
 from random import *
 import math
 pygame.init()
-clock = pygame.time.Clock()
 
 #______________________________________________________________________________
 #                                  CLASSES
@@ -14,6 +13,8 @@ class GameConfig :
 	windowW = 1200
 	blue=(113,177,227)
 	white=(255,255,255)
+	imgPelouse = pygame.image.load('images/pelouse.jpg')
+	imgFond = pygame.transform.scale(imgPelouse, (750, 1200))
 	imgHero = pygame.image.load('images/hero.png')
 	HeroW = 85
 	HeroH = 82
@@ -36,6 +37,7 @@ class GameConfig :
 	score=0
 	ennemies=[None]
 	imgEnnemy = pygame.image.load('images/ennemy.png')
+	imgEnnemyr = pygame.transform.rotate(imgEnnemy, 90)
 	EnnemiW = 60
 	EnnemiH = 37
 	imgCadre = pygame.image.load('images/cadre.png')
@@ -55,8 +57,10 @@ class GameState :
 		self.crossY=GameConfig.windowH/2 - GameConfig.crossH/2
 		self.cadreX=GameConfig.windowW - GameConfig.windowW/1.25 -50
 		self.cadreY=GameConfig.windowH - GameConfig.windowH/1.086 - 50
+		self.life=3
 
 	def draw(self,window):
+		#window.blit(GameConfig.imgFond,[0,0])
 		window.blit(GameConfig.imgHero,(self.HeroX,self.HeroY))
 		#window.blit(GameConfig.imgBalle,(Balle.balleX,Balle.balleY))
 		window.blit(GameConfig.imgCrosshair,(self.crossX,self.crossY))
@@ -74,10 +78,6 @@ class GameState :
 		#self.score+=1
 		#self.balleSpeed+=0.2
 
-	def isOver(self) :
-		touchingEdge = self.HeroY + GameConfig.HeroH > GameConfig.windowH+10 or self.HeroY <- 10
-		return touchingEdge
-
 	def drawbackground(self,window,color):
 		window.fill(color)
 
@@ -89,9 +89,10 @@ class Balle :
 	def __init__(self, gameState) :
 		self.balleX=GameConfig.windowW/20+GameConfig.HeroW
 		self.balleY=gameState.HeroY+GameConfig.HeroH/2 +8
-		self.balleSpeed=3
+		self.balleSpeed=6
 		#self.angle = math.atan2(gameState.crossY+GameConfig.crossH/2-gameState.HeroY+GameConfig.HeroH/2+8,gameState.crossX+GameConfig.crossW/2 - gameState.HeroX+GameConfig.HeroW)
 		self.angle = math.atan2(gameState.crossY-gameState.HeroY,gameState.crossX- gameState.HeroX)
+		self.imgBalle=pygame.transform.rotate(GameConfig.imgBalle, 360 - math.degrees(self.angle))
 
 	def update(self) :
 		self.balleX += self.balleSpeed*math.cos(self.angle)
@@ -99,29 +100,36 @@ class Balle :
 		return self.balleX, self.balleY
 
 class Ennemy :
-	def __init__(self, gameState) :
-		self.ennemyX=randint(200,1000)
-		self.ennemyY=randint(50,650)
+	def __init__(self) :
+		self.ennemyX=1120
+		self.ennemyY=randint(120,540)
 
 #______________________________________________________________________________
 #                                  FONCTIONS
 #______________________________________________________________________________
 
+def isLost(gameState) :
+	if gameState.life == 0 :
+			return True
+		 
+def perdUneVie(gameState) :
+	while compteur<array_size_ennemies() :
+		if GameConfig.ennemies[compteur] is not None :
+			if GameConfig.ennemies[compteur].ennemyX<gameState.cadreX : 
+				gameState.life -=1
+		compteur+=1		
+
 def niveau(window) :
 	if GameConfig.position==1 :
 		if GameConfig.level==1 :
 			displayMessage(window,"Choisir niveau :   "+str(GameConfig.level)+" >",60,GameConfig.windowW/2,GameConfig.windowH/2-80)
-		elif GameConfig.level==5 :
-			displayMessage(window,"Choisir niveau : < "+str(GameConfig.level),60,GameConfig.windowW/2,GameConfig.windowH/2-80)
 		else :
-			displayMessage(window,"Choisir niveau : < "+str(GameConfig.level)+" >",60,GameConfig.windowW/2,GameConfig.windowH/2-80)
+			displayMessage(window,"Choisir niveau : < "+str(GameConfig.level),60,GameConfig.windowW/2,GameConfig.windowH/2-80)
 	else :
 		if GameConfig.level==1 :
 			displayMessage(window,"Choisir niveau :   "+str(GameConfig.level)+" >",40,GameConfig.windowW/2,GameConfig.windowH/2-80)
-		elif GameConfig.level==5 :
-			displayMessage(window,"Choisir niveau : < "+str(GameConfig.level),40,GameConfig.windowW/2,GameConfig.windowH/2-80)
 		else :
-			displayMessage(window,"Choisir niveau : < "+str(GameConfig.level)+" >",40,GameConfig.windowW/2,GameConfig.windowH/2-80)
+			displayMessage(window,"Choisir niveau : < "+str(GameConfig.level),40,GameConfig.windowW/2,GameConfig.windowH/2-80)
 
 def difficulte(window) :
 	if GameConfig.position==2 :
@@ -135,9 +143,9 @@ def difficulte(window) :
 		if GameConfig.difficulty==1 :
 			displayMessage(window,"Difficulté :   Easy >",40,GameConfig.windowW/2,GameConfig.windowH/2)
 		elif GameConfig.difficulty==3 :
-			displayMessage(window,"Difficulté : < Extreme",40,GameConfig.windowW/2,GameConfig.windowH/2)
+			displayMessage(window,"Difficulté : < Hard",40,GameConfig.windowW/2,GameConfig.windowH/2)
 		else :
-			displayMessage(window,"Difficulté : < Normal >",40,GameConfig.windowW/2,GameConfig.windowH/2)
+			displayMessage(window,"Difficulté : < Medium >",40,GameConfig.windowW/2,GameConfig.windowH/2)
 
 def array_size_balles() :
 	compteur=0
@@ -172,7 +180,7 @@ def spawnEnnemy(gameState) :
 	
 	while continuer==False :
 		if GameConfig.ennemies[compteur] is None :
-			GameConfig.ennemies[compteur]=Ennemy(gameState)
+			GameConfig.ennemies[compteur]=Ennemy()
 			if array_size_ennemies()-1 == compteur :
 				GameConfig.ennemies.append(None)
 			continuer=True
@@ -186,16 +194,17 @@ def printballe(window, gameState) :
 			GameConfig.balles[compteur].update()
 			#GameConfig.balles[compteur].balleX+=GameConfig.balles[compteur].balleSpeed
 			#GameConfig.balles[compteur].balleY+=GameConfig.balles[compteur].balleSpeed*math.tan(GameConfig.balles[compteur].angle)
-			window.blit(GameConfig.imgBalle,(GameConfig.balles[compteur].balleX,GameConfig.balles[compteur].balleY))
+			window.blit(GameConfig.balles[compteur].imgBalle,(GameConfig.balles[compteur].balleX,GameConfig.balles[compteur].balleY))
 			#print(GameConfig.balles[compteur].angle)
 		compteur+=1
 
-def printennemy(window) :
+def printennemy(window,gameState) :
 	compteur=0
 	while compteur<array_size_ennemies() :
 		if GameConfig.ennemies[compteur] is not None :
 			#GameConfig.ennemies[compteur].ennemyX+=GameConfig.ennemies[compteur].balleSpeed
-			window.blit(GameConfig.imgEnnemy,(GameConfig.ennemies[compteur].ennemyX,GameConfig.ennemies[compteur].ennemyY))
+			window.blit(GameConfig.imgEnnemyr,(GameConfig.ennemies[compteur].ennemyX,GameConfig.ennemies[compteur].ennemyY))
+			GameConfig.ennemies[compteur].ennemyX+=moveEnnemylevel1(gameState)
 		compteur+=1
 
 def supprimerballe() :
@@ -206,16 +215,16 @@ def supprimerballe() :
 				GameConfig.balles[compteur]=None
 		compteur+=1
 
-def ennemydead() :
+def supprimerennemmy(gameState) :
 	compteur=0
 	while compteur<array_size_ennemies() :
 		if GameConfig.ennemies[compteur] is not None :
-			if GameConfig.ennemies[compteur].ennemyX>GameConfig.windowW : 
+			if GameConfig.ennemies[compteur].ennemyX<gameState.cadreX : 
 				GameConfig.ennemies[compteur]=None
 		compteur+=1
 
 def displayMessage(window,text,fontSize,x,y) :
-	font=pygame.font.Font('BradBunR.ttf',fontSize)
+	font=pygame.font.Font('ModerneM.ttf',fontSize)
 	img=font.render(text,True,GameConfig.white)
 	displayRect=img.get_rect()
 	displayRect.center=(x,y)
@@ -239,7 +248,7 @@ def getIA(gameState):
 def start(window, gameState) :
 	gameState.drawbackground(window,GameConfig.blue)
 	gameState.draw(window)
-	displayMessage(window,"Niveau : "+str(GameConfig.level)+"  /  Difficulté : "+str(GameConfig.difficulty),16,80,10)
+	displayMessage(window,"Niveau : "+str(GameConfig.level)+"  /  Difficulté : "+str(GameConfig.difficulty),14,100,10)
 
 '''def angle(gameState) : 
 	#return (gameState.crossY-gameState.HeroY) / (gameState.crossX - gameState.HeroX)
@@ -251,6 +260,28 @@ def inZone(gameState) :
 	if gameState.crossX > GameConfig.windowW - GameConfig.windowW/1.25 -50 and gameState.crossX<GameConfig.windowW - GameConfig.windowW/1.25 -50+GameConfig.cadreW and gameState.crossY>GameConfig.windowH - GameConfig.windowH/1.086 - 50 and gameState.crossY< GameConfig.windowH - GameConfig.windowH/1.086 - 50 + GameConfig.cadreH : 
 		return True
 	return False
+
+def moveEnnemylevel1(gameState) :
+	move = 0
+	if GameConfig.difficulty==1 :
+		move = -1
+	elif GameConfig.difficulty==2 :
+		move =  -1.5
+	else :
+		move = -2
+	return move
+
+def moveEnnemylevel2(gameState) :
+	if GameConfig.difficulty==1 :
+		Up = -2
+		Down = 2
+	elif GameConfig.difficulty==2 :
+		Up = -3
+		Down = 3
+	else :
+		Up = -4
+		Down = 4
+
 #______________________________________________________________________________
 #                                  FENETRES
 #______________________________________________________________________________
@@ -270,7 +301,7 @@ def settings_game(window, horloge) :
 			if GameConfig.position==1 :
 				if GameConfig.level>1 and event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT :
 					GameConfig.level-=1
-				if GameConfig.level<5 and event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT :
+				if GameConfig.level<2 and event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT :
 					GameConfig.level +=1
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN :
 					GameConfig.position=2
@@ -319,11 +350,9 @@ def gameLoop(window, horloge) :
 	displayMessage(window,"GO",100,GameConfig.windowW/2,GameConfig.windowH/2)
 	pygame.display.update()
 	time.sleep(0.4)
+
+	spawnEnnemy(gameState);
 	
-	spawnEnnemy(gameState);
-	spawnEnnemy(gameState);
-	spawnEnnemy(gameState);
-	printennemy(window);
 	while GameConfig.game_over==False and GameConfig.game_win==False :
 		pygame.mouse.set_visible(False)
 		for event in pygame.event.get() :
@@ -344,27 +373,38 @@ def gameLoop(window, horloge) :
 				#Balle.balleY=event.pos[1]
 				#print(angle(gameState))
 
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_UP :
+			 		nextMove=0
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN :
+					nextMove=0
+			if event.type == pygame.KEYUP :
+				nextMove=0
+
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_DELETE:
 				GameConfig.game_over = True
 			if GameConfig.ballestirées==20:
 				GameConfig.game_win = True
 				
-			if event.type == pygame.KEYDOWN and event.key == pygame.K_UP :
-				nextMove=Move.Up
-			if event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN and gameState.HeroY<666 :
-				nextMove=Move.Down
-			if event.type == pygame.KEYUP :
-				nextMove=0
-				
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE :
 				pygame.quit()
 				quit()
-		
-		if timer%500==0  :
+
+		keys = pygame.key.get_pressed()
+		if keys[pygame.K_UP] :
+			if gameState.HeroY <= -5 :
+				nextMove=0
+			else :
+				nextMove=Move.Up
+		if keys[pygame.K_DOWN] :
+			if gameState.HeroY >= 668 :
+				nextMove=0
+			else :
+				nextMove=Move.Down
+
+		if timer%250==0  :
 			spawnEnnemy(gameState)		
 		supprimerballe()
-		ennemydead()
-		print(gameState.HeroY)
+		supprimerennemmy(gameState)
 		#Balle.balleX += Balle.balleSpeed    
 		gameState.advanceState(nextMove)
 		#nextMove=getIA(gameState)
@@ -373,15 +413,16 @@ def gameLoop(window, horloge) :
 		print(timer)
 		gameState.drawbackground(window,GameConfig.blue)
 		gameState.draw(window)
+		printennemy(window, gameState)
 		printballe(window, gameState)
-		printennemy(window)
-		displayMessage(window,"Niveau : "+str(GameConfig.level)+"  /  Difficulté : "+str(GameConfig.difficulty),16,80,10)
+		displayMessage(window,"Vies restantes : "+str(gameState.life),20,GameConfig.windowW/2,GameConfig.windowH-20)
+		displayMessage(window,"Niveau : "+str(GameConfig.level)+"  /  Difficulté : "+str(GameConfig.difficulty),14,100,10)
 		#displayMessage(window,"Score : "+str(gameState.score),16,30,10)
 
 		'''if gameState.isOver()==True :
 			displayMessage(window,"You lose!",30,GameConfig.windowW/2,GameConfig.windowH/2-50)
 			displayMessage(window,"Appuyer sur espace pour recommencer",20,GameConfig.windowW/2,GameConfig.windowH/2+50)'''
-
+		
 		pygame.display.update()
 	'''if(playAgain()) :
 		gameLoop(window,horloge)
@@ -396,14 +437,15 @@ def end_game(window,horloge) :
 		horloge.tick(100)
 		gameState.drawbackground(window,GameConfig.blue)
 		if GameConfig.game_win == True :
-			displayMessage(window,"Bravo vous avez gagné ! Appuyez sur une touche pour recommencer",40,GameConfig.windowW/2,50)
+			displayMessage(window,"Bravo vous avez gagné !",35,GameConfig.windowW/2,50)
 		else : 
-			displayMessage(window,"Dommage vous avez perdu ! Appuyez sur une touche pour recommencer",40,GameConfig.windowW/2,50)
-		displayMessage(window,"Statistiques :",30,GameConfig.windowW/2,GameConfig.windowH/2-200)
-		displayMessage(window,"Temps : "+str(GameConfig.temps),22,GameConfig.windowW/2,GameConfig.windowH/2-140)
-		displayMessage(window,"Balles tirées : "+str(GameConfig.ballestirées),22,GameConfig.windowW/2,GameConfig.windowH/2-100)
-		displayMessage(window,"Ennemis tués : "+str(GameConfig.ennemistués),22,GameConfig.windowW/2,GameConfig.windowH/2-60)
-		displayMessage(window,"Score : "+str(GameConfig.score),22,GameConfig.windowW/2,GameConfig.windowH/2-20)
+			displayMessage(window,"Dommage vous avez perdu !",35,GameConfig.windowW/2,50)
+		displayMessage(window,"Appuyez sur une touche pour recommencer",30,GameConfig.windowW/2,140)
+		displayMessage(window,"Statistiques :",30,GameConfig.windowW/2,240)
+		displayMessage(window,"Temps : "+str(GameConfig.temps),22,GameConfig.windowW/2,300)
+		displayMessage(window,"Balles tirées : "+str(GameConfig.ballestirées),22,GameConfig.windowW/2,340)
+		displayMessage(window,"Ennemis tués : "+str(GameConfig.ennemistués),22,GameConfig.windowW/2,380)
+		displayMessage(window,"Score : "+str(GameConfig.score),22,GameConfig.windowW/2,420)
 		pygame.display.update()
 		time.sleep(3)
 		for event in pygame.event.get() :
