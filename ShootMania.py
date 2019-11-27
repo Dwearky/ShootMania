@@ -113,6 +113,7 @@ def isLost(gameState) :
 			return True
 		 
 def perdUneVie(gameState) :
+	compteur = 0
 	while compteur<array_size_ennemies() :
 		if GameConfig.ennemies[compteur] is not None :
 			if GameConfig.ennemies[compteur].ennemyX<gameState.cadreX : 
@@ -211,7 +212,7 @@ def supprimerballe() :
 	compteur=0
 	while compteur<array_size_balles() :
 		if GameConfig.balles[compteur] is not None :
-			if GameConfig.balles[compteur].balleX>GameConfig.windowW : 
+			if GameConfig.balles[compteur].balleX>GameConfig.windowW :#or GameConfig.balles[compteur].balleX> :  
 				GameConfig.balles[compteur]=None
 		compteur+=1
 
@@ -355,6 +356,9 @@ def gameLoop(window, horloge) :
 	
 	while GameConfig.game_over==False and GameConfig.game_win==False :
 		pygame.mouse.set_visible(False)
+		perdUneVie(gameState)
+		if isLost(gameState) :
+			GameConfig.game_over = True
 		for event in pygame.event.get() :
 			if event.type == pygame.QUIT :
 				GameConfig.game_over = True
@@ -410,7 +414,7 @@ def gameLoop(window, horloge) :
 		#nextMove=getIA(gameState)
 		horloge.tick(100)
 		timer+=1
-		print(timer)
+		#print(timer)
 		gameState.drawbackground(window,GameConfig.blue)
 		gameState.draw(window)
 		printennemy(window, gameState)
