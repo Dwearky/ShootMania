@@ -91,7 +91,7 @@ class Balle :
 		self.balleY=gameState.HeroY+GameConfig.HeroH/2 +8
 		self.balleSpeed=6
 		#self.angle = math.atan2(gameState.crossY+GameConfig.crossH/2-gameState.HeroY+GameConfig.HeroH/2+8,gameState.crossX+GameConfig.crossW/2 - gameState.HeroX+GameConfig.HeroW)
-		self.angle = math.atan2(gameState.crossY-gameState.HeroY,gameState.crossX- gameState.HeroX)
+		self.angle = math.atan2(gameState.crossY-gameState.HeroY-45,gameState.crossX- gameState.HeroX-30)
 		self.imgBalle=pygame.transform.rotate(GameConfig.imgBalle, 360 - math.degrees(self.angle))
 
 	def update(self) :
@@ -450,6 +450,7 @@ def end_game(window,horloge) :
 		displayMessage(window,"Balles tirées : "+str(GameConfig.ballestirées),22,GameConfig.windowW/2,340)
 		displayMessage(window,"Ennemis tués : "+str(GameConfig.ennemistués),22,GameConfig.windowW/2,380)
 		displayMessage(window,"Score : "+str(GameConfig.score),22,GameConfig.windowW/2,420)
+		displayMessage(window,"Jeu réalisé par Thomas GENDROT, Théo GROLLIER, (Nolwenn Cloarec)",20,GameConfig.windowW-375,GameConfig.windowH-20)
 		pygame.display.update()
 		time.sleep(3)
 		for event in pygame.event.get() :
